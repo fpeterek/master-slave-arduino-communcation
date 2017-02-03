@@ -17,15 +17,17 @@
 
 struct info {
     
-    unsigned char day;
-    unsigned char month;
-    unsigned char year;
+    unsigned char  day;
+    unsigned char  month;
+    unsigned short year;
     
     unsigned char hour;
     unsigned char minute;
     unsigned char second;
     
     char temperature;
+    
+    info();
     
 };
 
@@ -44,7 +46,10 @@ class Slave {
     static const fun<void (Slave::*)()> functions[3];
     
 public:
+    
     void receiveData(const char * data);
+    
+    const info & getInfo() const;
     
 };
 

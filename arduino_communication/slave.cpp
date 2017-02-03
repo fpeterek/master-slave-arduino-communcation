@@ -8,6 +8,21 @@
 
 #include "slave.hpp"
 
+info::info() {
+    
+    day   = 0;
+    month = 0;
+    year  = 0;
+    
+    hour   = 0;
+    minute = 0;
+    second = 0;
+    
+    temperature = 0;
+    
+}
+
+
 void Slave::receiveData(const char * data) {
     
     strcpy(rawData, data);
@@ -22,6 +37,107 @@ const fun<void (Slave::*)()> Slave::functions[3] = {
     fun<void (Slave::*)()>("temp", &Slave::parseTemp)
     
 };
+
+const info & Slave::getInfo() const {
+    return information;
+}
+
+void Slave::parseTime() {
+    
+    const char * substr;
+    substr = strstr(rawData, ";") + 1;
+    
+    unsigned char newHour;
+    unsigned char newMinute;
+    unsigned char newSecond;
+    
+    char * str;
+    
+    unsigned char * const pointers[3] = {
+        &newHour,
+        &newMinute,
+        &newSecond
+    };
+    const unsigned char delimiters[3] = { ':', ':', '}' };
+    
+    for (unsigned char i = 0; i < 3; ++i) {
+        char number[20];
+        strcpy(number, substr);
+        for (str = number; *str != delimiters[i]; ++str);
+        *str = '\0';
+        substr += str - number + 1;
+        *(pointers[i]) = atoi(number);
+    }
+    
+    if (newHour > 24 or newMinute > 60 or newSecond > 60) {
+        return;
+    }
+    
+    information.hour   = newHour;
+    information.minute = newMinute;
+    information.second = newSecond;
+    
+}
+
+void Slave::parseDate() {
+    
+    const char * substr;
+    substr = strstr(rawData, ";") + 1;
+    
+    unsigned short newDay;
+    unsigned short newYear;
+    unsigned short newMonth;
+    
+    char * str;
+    
+    unsigned short * const pointers[3] = {
+        &newDay,
+        &newMonth,
+        &newYear
+    };
+    
+    const unsigned char delimiters[3] = { '.', '.', '}' };
+    
+    for (unsigned char i = 0; i < 3; ++i) {
+        char number[20];
+        strcpy(number, substr);
+        for (str = number; *str != delimiters[i]; ++str);
+        *str = '\0';
+        substr += str - number + 1;
+        *(pointers[i]) = atoi(number);
+    }
+    
+    if (newDay > 31 or newMonth > 12 or not newMonth) {
+        return;
+    }
+    
+    information.day   = newDay;
+    information.month = newMonth;
+    information.year  = newYear;
+
+    
+}
+
+void Slave::parseTemp() {
+    
+    const char * substr;
+    substr = strstr(rawData, ";") + 1;
+    
+    char newTemp;
+    
+    char * str;
+    
+    char number[20];
+    strcpy(number, substr);
+    for (str = number; *str != '}'; ++str);
+    *str = '\0';
+    substr += str - number + 1;
+    newTemp = atoi(number);
+    
+    
+    information.temperature = newTemp;
+    
+}
 
 void Slave::parseData() {
     
@@ -46,10 +162,11 @@ void Slave::parseData() {
     type[4] = 0;
     
     /* Iterate over function pointers and call matching function */
-    for (auto & i : Slave::functions) {
+    for (auto & iter : Slave::functions) {
         
-        if (strcmp(type, i.string)) {
-            ((*this).*(i.function))();
+        /* strcmp returns 0 if strings are equal */
+        if (not strcmp(type, iter.string)) {
+            ((*this).*(iter.function))();
             break;
         }
         
