@@ -10,10 +10,20 @@
 #define master_hpp
 
 #include <stdio.h>
+#include <ctime>
+#include <cstdlib>
+#include <cmath>
+#include <cstdlib>
+
+void sendData(const char * data);
 
 class Master {
     
+    char temperature;
+    
 public:
+    
+    void setTemp(const char temp);
     
     void sendTime();
     void sendTemperature();
